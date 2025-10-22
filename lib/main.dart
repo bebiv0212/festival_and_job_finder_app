@@ -2,16 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/navigation_provider.dart';
 import 'screens/community_screen.dart';
-import 'screens/festival_screen.dart';
+import 'screens/festival_list_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/job_screen.dart';
 import 'screens/mypage_screen.dart';
+import 'providers/festival_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-void main() {
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  const AndroidInitializationSettings initSettingsAndroid =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initSettings =
+  InitializationSettings(android: initSettingsAndroid);
+
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => FestivalProvider()),
       ],
       child: const MyApp(),
     ),
@@ -38,7 +54,7 @@ class MainScreen extends StatelessWidget {
 
   final List<Widget> _screens = const [
     HomeScreen(),
-    FestivalScreen(),
+    FestivalListScreen(),
     JobScreen(),
     CommunityScreen(),
     MypageScreen()
