@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/navigation_provider.dart';
 import 'screens/community_screen.dart';
-import 'screens/festival_screen.dart';
+import 'screens/festival_list_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/job_screen.dart';
 import 'screens/mypage_screen.dart';
+import 'providers/festival_provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
+        ChangeNotifierProvider(create: (_) => FestivalProvider()),
       ],
       child: const MyApp(),
     ),
@@ -38,7 +40,7 @@ class MainScreen extends StatelessWidget {
 
   final List<Widget> _screens = const [
     HomeScreen(),
-    FestivalScreen(),
+    FestivalListScreen(),
     JobScreen(),
     CommunityScreen(),
     MypageScreen()
