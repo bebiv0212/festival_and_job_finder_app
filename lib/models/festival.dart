@@ -11,7 +11,9 @@ class Festival {
   final List<String> tags;
   final double latitude;
   final double longitude;
-
+  final List<String> facilities;
+  final String organizer;
+  final String contact;
   Festival({
     required this.id,
     required this.name,
@@ -25,5 +27,8 @@ class Festival {
     this.tags = const [],
     required this.latitude,
     required this.longitude,
+    this.facilities = const [],
+    this.organizer = "",
+    this.contact = "",
   });
 }

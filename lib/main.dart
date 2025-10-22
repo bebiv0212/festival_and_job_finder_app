@@ -7,8 +7,22 @@ import 'screens/home_screen.dart';
 import 'screens/job_screen.dart';
 import 'screens/mypage_screen.dart';
 import 'providers/festival_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-void main() {
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  const AndroidInitializationSettings initSettingsAndroid =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initSettings =
+  InitializationSettings(android: initSettingsAndroid);
+
+  await flutterLocalNotificationsPlugin.initialize(initSettings);
   runApp(
     MultiProvider(
       providers: [

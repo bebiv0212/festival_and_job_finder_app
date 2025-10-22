@@ -1,40 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../models/festival.dart';
-import 'festival_detail_screen.dart';
+import 'package:provider/provider.dart';
+import '../providers/festival_provider.dart';
 
-class FestivalMapScreen extends StatelessWidget {
-  final List<Festival> festivals;
+class FestivalMapScreen extends StatefulWidget {
+  const FestivalMapScreen({super.key});
 
-  const FestivalMapScreen({super.key, required this.festivals});
+  @override
+  State<FestivalMapScreen> createState() => _FestivalMapScreenState();
+}
+
+class _FestivalMapScreenState extends State<FestivalMapScreen> {
+  GoogleMapController? _mapController;
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<FestivalProvider>();
+    final festivals = provider.festivals;
+
+    Set<Marker> markers = festivals.map((f) {
+      return Marker(
+        markerId: MarkerId(f.id),
+        position: LatLng(f.latitude, f.longitude),
+        infoWindow: InfoWindow(
+          title: f.name,
+          snippet: f.location,
+        ),
+        onTap: () {
+          // TODO: 상세 화면 이동
+        },
+      );
+    }).toSet();
+
     return Scaffold(
       appBar: AppBar(title: const Text("축제 지도")),
       body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: LatLng(festivals.first.latitude, festivals.first.longitude),
-          zoom: 10,
+        initialCameraPosition: const CameraPosition(
+          target: LatLng(36.5, 127.9), // 대한민국 중심
+          zoom: 6,
         ),
-        markers: festivals.map((f) {
-          return Marker(
-            markerId: MarkerId(f.id),
-            position: LatLng(f.latitude, f.longitude),
-            infoWindow: InfoWindow(
-              title: f.name,
-              snippet: f.location,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => FestivalDetailScreen(festival: f),
-                  ),
-                );
-              },
-            ),
-          );
-        }).toSet(),
+        markers: markers,
+        onMapCreated: (controller) {
+          _mapController = controller;
+        },
       ),
     );
   }

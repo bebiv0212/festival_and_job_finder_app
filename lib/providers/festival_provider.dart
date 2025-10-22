@@ -4,13 +4,39 @@ import '../services/festival_api_service.dart';
 
 class FestivalProvider with ChangeNotifier {
   List<Festival> _festivals = [];
+  final Set<String> _favorites = {};
+  final Set<String> _notifications = {};
   bool _isLoading = false;
   String? _error;
 
   List<Festival> get festivals => _festivals;
+  Set<String> get favorites => _favorites;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+
+
+  bool isFavorite(String id) => _favorites.contains(id);
+  bool isNotified(String id) => _notifications.contains(id);
+
+  // ✅ 찜하기 토글
+  void toggleFavorite(String id) {
+    if (_favorites.contains(id)) {
+      _favorites.remove(id);
+    } else {
+      _favorites.add(id);
+    }
+    notifyListeners();
+  }
+  //알림 토글
+  void toggleNotification(String id) {
+    if (_notifications.contains(id)) {
+      _notifications.remove(id);
+    } else {
+      _notifications.add(id);
+    }
+    notifyListeners();
+  }
   final FestivalApiService _apiService = FestivalApiService();
   Future<void> loadFestivals() async {
     _isLoading = true;
@@ -42,6 +68,9 @@ class FestivalProvider with ChangeNotifier {
         tags: ['EDM', '야외', '음악'],
         latitude: 37.528,
         longitude: 126.932,
+        facilities: ['주차장', '화장실', '푸드트럭', '의료실'],
+        organizer: '서울특별시',
+        contact: '02-120',
       ),
       Festival(
         id: '2',
@@ -56,6 +85,9 @@ class FestivalProvider with ChangeNotifier {
         tags: ['영화', '문화'],
         latitude: 35.168,
         longitude: 129.137,
+        facilities: ['영화관', '푸드코트', '주차장'],
+        organizer: '부산광역시 & 영화진흥위원회',
+        contact: '051-123-4567',
       ),
       Festival(
         id: '3',
@@ -70,6 +102,9 @@ class FestivalProvider with ChangeNotifier {
         tags: ['전통', '문화', '체험'],
         latitude: 35.815,
         longitude: 127.149,
+        facilities: ['전통 체험관', '푸드존', '기념품 상점'],
+        organizer: '전주시',
+        contact: '063-987-6543',
       ),
     ];
 

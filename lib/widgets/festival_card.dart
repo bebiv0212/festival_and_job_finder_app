@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/festival.dart';
+import '../providers/festival_provider.dart';
 
 class FestivalCard extends StatelessWidget {
   final Festival festival;
   final VoidCallback onTap;
-  final VoidCallback? onFavorite;
   final VoidCallback? onShare;
   final VoidCallback? onNavigate;
 
@@ -12,13 +13,15 @@ class FestivalCard extends StatelessWidget {
     super.key,
     required this.festival,
     required this.onTap,
-    this.onFavorite,
     this.onShare,
     this.onNavigate,
   });
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<FestivalProvider>();
+    final isFav = provider.isFavorite(festival.id);
+
     return Card(
       margin: const EdgeInsets.all(12),
       clipBehavior: Clip.hardEdge,
@@ -29,7 +32,7 @@ class FestivalCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ---------- 상단 이미지 + 찜 버튼 ----------
+            // ---------- 상단 이미지 + 찜 + 가격 ----------
             Stack(
               children: [
                 Image.asset(
@@ -38,21 +41,49 @@ class FestivalCard extends StatelessWidget {
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
-                /*
-            Image.network(
-              festival.imageUrl,
-              height: 180,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),*/
+
+                // 찜 버튼 (오른쪽 상단)
                 Positioned(
                   top: 8,
                   right: 8,
                   child: CircleAvatar(
                     backgroundColor: Colors.white70,
                     child: IconButton(
-                      icon: const Icon(Icons.favorite_border, color: Colors.red),
-                      onPressed: onFavorite,
+                      icon: Icon(
+                        isFav ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                      onPressed: () {
+                        provider.toggleFavorite(festival.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isFav ? "찜을 해제했습니다." : "찜에 추가했습니다.",
+                            ),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+
+                // ✅ 가격 박스 (왼쪽 하단)
+                Positioned(
+                  left: 8,
+                  bottom: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: festival.isFree ? Colors.green[100] : Colors.blue[100],
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      festival.isFree ? "무료" : "${festival.price ?? 0}원",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: festival.isFree ? Colors.green : Colors.blue,
+                      ),
                     ),
                   ),
                 ),
@@ -65,40 +96,15 @@ class FestivalCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 축제명 + 가격박스
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          festival.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (festival.isFree)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.green[100],
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text("무료",
-                              style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                        )
-                      else if (festival.price != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[100],
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text("${festival.price}원",
-                              style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
-                        ),
-                    ],
+                  Text(
+                    festival.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(festival.description,
+                    style: TextStyle(color: Colors.grey),
+
                   ),
 
                   const SizedBox(height: 6),
@@ -126,7 +132,7 @@ class FestivalCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           festival.location,
-                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                          style: const TextStyle(fontSize: 13),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -150,20 +156,22 @@ class FestivalCard extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
-                  // 액션 버튼: 공유, 길찾기
+                  // ✅ 액션 버튼: 공유, 길찾기 (왼쪽 정렬)
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.share, color: Colors.grey),
-                        onPressed: onShare,
-                      ),
                       IconButton(
                         icon: const Icon(Icons.directions, color: Colors.grey),
                         onPressed: onNavigate,
                       ),
+                      Text('길찾기'),
+                      IconButton(
+                        icon: const Icon(Icons.share, color: Colors.grey),
+                        onPressed: onShare,
+                      ),
+                      Text('공유'),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),

@@ -1,171 +1,346 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/festival.dart';
+import '../providers/festival_provider.dart';
 
-class FestivalDetailScreen extends StatelessWidget {
+class FestivalDetailScreen extends StatefulWidget {
   final Festival festival;
 
   const FestivalDetailScreen({super.key, required this.festival});
 
   @override
+  State<FestivalDetailScreen> createState() => _FestivalDetailScreenState();
+}
+
+class _FestivalDetailScreenState extends State<FestivalDetailScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 4, // 정보 / 일정 / 위치 / 후기
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(festival.name),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.favorite_border),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("찜한 축제에 추가되었습니다.")),
-                );
-              },
+    final provider = context.watch<FestivalProvider>();
+    final isFav = provider.isFavorite(widget.festival.id);
+    final isNotified = provider.isNotified(widget.festival.id);
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ---------- 상단 배너 + 액션 버튼 ----------
+            Stack(
+              children: [
+                Image.asset(
+                  'lib/assets/images/festival_placeholder.png',
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(Icons.notifications_none),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text("알림 설정"),
-                    content: const Text("행사 시작 1일 전에 알려드릴까요?"),
-                    actions: [
-                      TextButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text("취소")),
-                      ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("알림이 설정되었습니다.")),
-                            );
-                          },
-                          child: const Text("확인")),
+
+            // ---------- 기본 정보 ----------
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.festival.name,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_month,
+                          size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${widget.festival.startDate.toLocal().toString().split(' ')[0]} "
+                            "~ ${widget.festival.endDate.toLocal().toString().split(' ')[0]}",
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const Icon(Icons.place, size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(widget.festival.location,
+                            style: const TextStyle(color: Colors.grey)),
+                      ),
                     ],
                   ),
-                );
-              },
+
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    children: widget.festival.tags
+                        .map((tag) => Chip(
+                      label: Text(tag,
+                          style: const TextStyle(fontSize: 12)),
+                      backgroundColor: Colors.grey[200],
+                    ))
+                        .toList(),
+                  ),
+                ],
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: () {
-                // 공유 기능 (플러그인 활용 가능)
-              },
+            // ---------- 액션 버튼(버블 + 텍스트) ----------
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildActionBubble(
+                    icon: isFav ? Icons.favorite : Icons.favorite_border,
+                    label: isFav ? "찜하기":"찜완료",
+                    color: Colors.red,
+                    onTap: () {
+                      provider.toggleFavorite(widget.festival.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isFav ? "찜을 해제했습니다." : "찜에 추가했습니다.",
+                          ),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildActionBubble(
+                    icon: isNotified ? Icons.notifications : Icons.notifications_none,
+                    label: "알림 설정",
+                    color: Colors.blue,
+                    onTap: () {
+                      provider.toggleNotification(widget.festival.id);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isNotified
+                                ? "알림이 해제되었습니다."
+                                : "행사 시작 1일 전에 알려드릴게요.",
+                          ),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildActionBubble(
+                    icon: Icons.directions,
+                    label: "길찾기",
+                    color: Colors.green,
+                    onTap: () {
+                      // TODO: 지도 길찾기 기능
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // ---------- 탭 ----------
+            TabBar(
+              controller: _tabController,
+              labelColor: Colors.black,
+              indicatorColor: Colors.blue,
+              tabs: const [
+                Tab(text: "정보"),
+                Tab(text: "일정"),
+                Tab(text: "위치"),
+                Tab(text: "후기"),
+              ],
+            ),
+
+            // ---------- 탭 내용 ----------
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildInfoTab(),
+                  _buildScheduleTab(),
+                  _buildLocationTab(),
+                  _buildReviewTab(),
+                ],
+              ),
             ),
           ],
-          bottom: const TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: "정보"),
-              Tab(text: "일정"),
-              Tab(text: "위치"),
-              Tab(text: "후기"),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildInfoTab(),
-            _buildScheduleTab(),
-            _buildMapTab(),
-            _buildReviewsTab(),
-          ],
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(12),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(50),
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("예매 페이지로 이동합니다.")),
-              );
-            },
-            child: const Text("이 축제 찜하기"),
-          ),
         ),
       ),
     );
   }
 
-  /// 정보 탭
+  // ---------- 정보 탭 ----------
   Widget _buildInfoTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(festival.description,
-              style: const TextStyle(fontSize: 16, height: 1.4)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today, size: 18),
-              const SizedBox(width: 6),
-              Text("${festival.startDate.toLocal()} ~ ${festival.endDate.toLocal()}"),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.place, size: 18),
-              const SizedBox(width: 6),
-              Text(festival.location),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            children: festival.tags.map((tag) => Chip(label: Text(tag))).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 일정 탭
-  Widget _buildScheduleTab() {
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: const [
-        ListTile(
-          leading: Icon(Icons.music_note),
-          title: Text("1일차: EDM 파티"),
-          subtitle: Text("18:00 ~ 23:00"),
+      children: [
+        // 🎵 축제 소개
+        _buildInfoSection(
+          icon: Icons.info_outline,
+          title: "축제 소개",
+          content: Text(
+            widget.festival.description,
+            style: const TextStyle(fontSize: 14),
+          ),
         ),
-        ListTile(
-          leading: Icon(Icons.movie),
-          title: Text("2일차: 영화 상영"),
-          subtitle: Text("14:00 ~ 21:00"),
+
+        const SizedBox(height: 16),
+
+        // 💰 요금 정보
+        _buildInfoSection(
+          icon: Icons.attach_money,
+          title: "요금 정보",
+          content: Row(
+            children: [
+              if (widget.festival.isFree)
+                const Text("무료",
+                    style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14))
+              else if (widget.festival.price != null)
+                Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    "${widget.festival.price}원",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: () {
+                  // TODO: 예매하기 기능 연결
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(fontSize: 13),
+                ),
+                child: const Text("예매하기"),
+              )
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // 🏞 편의시설
+        _buildInfoSection(
+          icon: Icons.room_service_outlined,
+          title: "편의시설",
+          content: Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: widget.festival.facilities.map((facility) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.circle, size: 6, color: Colors.black54),
+                  const SizedBox(width: 6),
+                  Text(facility, style: const TextStyle(fontSize: 13)),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // 📞 주최사 및 문의
+        _buildInfoSection(
+          icon: Icons.phone_in_talk_outlined,
+          title: "주최사 및 문의",
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.festival.organizer,
+                  style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(widget.festival.contact,
+                  style: const TextStyle(fontSize: 13, color: Colors.black87)),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  /// 위치 탭
-  Widget _buildMapTab() {
-    return const Center(
-      child: Text("지도 뷰 (Google Maps / Kakao Map 연동 예정)"),
+  Widget _buildInfoSection({required String title, required Widget content, required IconData icon}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black)),
+          const SizedBox(height: 8),
+          content,
+        ],
+      ),
     );
   }
 
-  /// 후기 탭
-  Widget _buildReviewsTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        ListTile(
-          leading: CircleAvatar(child: Icon(Icons.person)),
-          title: Text("좋은 분위기였습니다!"),
-          subtitle: Text("2024-07-16"),
+  Widget _buildScheduleTab() {
+    return const Center(child: Text("일정 탭 (추후 데이터 연동)"));
+  }
+
+  Widget _buildLocationTab() {
+    return const Center(child: Text("위치 탭 (구글맵 표시 예정)"));
+  }
+
+  Widget _buildReviewTab() {
+    return const Center(child: Text("후기 탭 (커뮤니티 연동 예정)"));
+  }
+  Widget _buildActionBubble({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 24,
+          backgroundColor: color.withOpacity(0.15),
+          child: IconButton(
+            icon: Icon(icon, color: color),
+            onPressed: onTap,
+          ),
         ),
-        ListTile(
-          leading: CircleAvatar(child: Icon(Icons.person)),
-          title: Text("볼거리가 다양해요."),
-          subtitle: Text("2024-07-17"),
-        ),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }
