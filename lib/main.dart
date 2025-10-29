@@ -9,18 +9,18 @@ import 'screens/mypage_screen.dart';
 import 'providers/festival_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+    FlutterLocalNotificationsPlugin();
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   const AndroidInitializationSettings initSettingsAndroid =
-  AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  const InitializationSettings initSettings =
-  InitializationSettings(android: initSettingsAndroid);
+  const InitializationSettings initSettings = InitializationSettings(
+    android: initSettingsAndroid,
+  );
 
   await flutterLocalNotificationsPlugin.initialize(initSettings);
   runApp(
@@ -57,7 +57,7 @@ class MainScreen extends StatelessWidget {
     FestivalListScreen(),
     JobScreen(),
     CommunityScreen(),
-    MypageScreen()
+    MypageScreen(),
   ];
 
   @override
@@ -70,14 +70,23 @@ class MainScreen extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         currentIndex: provider.currentIndex,
         onTap: provider.setIndex,
-        selectedItemColor: Colors.black,         // ✅ 선택된 색상
+        selectedItemColor: Colors.black, // ✅ 선택된 색상
         unselectedItemColor: Color(0xFFBDBDBD),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: '홈'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), label: '축제'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today_outlined),
+            label: '축제',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.work_outline), label: '채용'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: '커뮤니티'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: '마이페이지'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: '커뮤니티',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: '마이페이지',
+          ),
         ],
       ),
     );
